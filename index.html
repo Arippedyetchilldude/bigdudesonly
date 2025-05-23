@@ -5,19 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>bigdudesonly.com</title>
     <script>
-        // Function to update visitor count
-        async function updateVisitorCount() {
+        // Function to update visitor and fail count
+        async function updateVisitorAndFailCount() {
             try {
-                const response = await fetch('https://bigdudesonly-api.onrender.com/api/visitors');
+                const response = await fetch('https://bigdudesonly-api.onrender.com/api/stats');
                 const data = await response.json();
                 document.getElementById('visitor-count').textContent = data.visits;
+                document.getElementById('fail-count').textContent = data.fails;
             } catch (error) {
-                console.error('Error fetching visitor count:', error);
+                console.error('Error fetching stats:', error);
             }
         }
 
-        // Update count on page load
-        window.addEventListener('load', updateVisitorCount);
+        // Update counts on page load
+        window.addEventListener('load', updateVisitorAndFailCount);
     </script>
     <style>
         body {
@@ -329,6 +330,8 @@
     <div class="title">bigdudesonly.com</div>
     <div class="visitor-counter">
         Visitors: <span id="visitor-count">0</span>
+        &nbsp;|&nbsp;
+        Fails: <span id="fail-count">0</span>
     </div>
     <button id="enter-btn">You can enter if you pass the test</button>
     <button id="colorblind-toggle">Toggle Colorblind Mode</button>
