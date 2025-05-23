@@ -8,7 +8,7 @@
         // Function to update visitor count
         async function updateVisitorCount() {
             try {
-                const response = await fetch('http://localhost:3000/api/visitors');
+                const response = await fetch('https://bigdudesonly-api.onrender.com/api/visitors');
                 const data = await response.json();
                 document.getElementById('visitor-count').textContent = data.count;
             } catch (error) {
@@ -352,7 +352,7 @@
     <script>
         // BigDudeVerifier API Client
         const BigDudeVerifier = {
-            API_URL: 'http://localhost:3000/api/verify',
+            API_URL: 'https://bigdudesonly-api.onrender.com/api/verify',
             
             getRandomProcessingTime() {
                 const times = [4200, 6900, 8008, 10000]; // times in milliseconds
