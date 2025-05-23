@@ -10,7 +10,7 @@
             try {
                 const response = await fetch('https://bigdudesonly-api.onrender.com/api/visitors');
                 const data = await response.json();
-                document.getElementById('visitor-count').textContent = data.count;
+                document.getElementById('visitor-count').textContent = data.visits;
             } catch (error) {
                 console.error('Error fetching visitor count:', error);
             }
