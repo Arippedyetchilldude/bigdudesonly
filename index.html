@@ -8,6 +8,9 @@
         // Function to update visitor and fail count
         async function updateVisitorAndFailCount() {
             try {
+                // First increment the visitor count
+                await fetch('https://bigdudesonly-api.onrender.com/api/visitors');
+                // Then fetch the updated stats
                 const response = await fetch('https://bigdudesonly-api.onrender.com/api/stats');
                 const data = await response.json();
                 document.getElementById('visitor-count').textContent = data.visits;
