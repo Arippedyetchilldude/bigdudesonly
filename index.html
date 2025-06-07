@@ -324,6 +324,33 @@
             background-color: #2B83EA;
             color: white;
         }
+        #blog-btn {
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: yellow;
+            color: red;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 20px auto;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        #blog-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(255, 255, 0, 0.5);
+        }
+
+        body.colorblind-mode #blog-btn {
+            background-color: #2B83EA;
+            color: white;
+        }
+
+        body.colorblind-mode #blog-btn:hover {
+            box-shadow: 0 0 10px rgba(43, 131, 234, 0.5);
+        }
     </style>
 </head>
 <body>
@@ -337,6 +364,7 @@
         Fails: <span id="fail-count">0</span>
     </div>
     <button id="enter-btn">You can enter if you pass the test</button>
+    <a href="blog.html" id="blog-btn">Check out our blog</a>
     <button id="colorblind-toggle">Toggle Colorblind Mode</button>
 
     <div id="camera-container">
@@ -385,6 +413,26 @@
                     console.error('API Error:', error);
                     throw error;
                 }
+            },
+
+            async verifyBigDude(imageData) {
+                try {
+                    const response = await fetch('/api/verify-big-dude', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ imageData })
+                    });
+                    const result = await response.json();
+                    const isBigDude = result.choices && result.choices[0].message.content.trim().toLowerCase() === 'true';
+                    if (isBigDude) {
+                        localStorage.setItem('isBigDude', 'true');
+                        localStorage.setItem('bigDudeName', 'Big Dude ' + Math.floor(Math.random() * 1000));
+                    }
+                    return isBigDude;
+                } catch (error) {
+                    console.error('API Error:', error);
+                    throw error;
+                }
             }
         };
 
@@ -428,7 +476,24 @@
             Array.from(steps).forEach(step => step.style.opacity = '0.3');
 
             try {
-                // Call BigDudeVerifier API
+                // Get the image data from the video
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0);
+                const imageData = canvas.toDataURL('image/jpeg');
+
+                // First verify if they're a big dude
+                const isBigDude = await BigDudeVerifier.verifyBigDude(imageData);
+                
+                if (isBigDude) {
+                    // If they're a big dude, redirect to the big dudes section
+                    window.location.href = 'bigdudesonly.html';
+                    return;
+                }
+
+                // If not a big dude, proceed with regular verification
                 console.log('Initiating BigDudeVerifier API request...');
                 const result = await BigDudeVerifier.verifyDude();
 

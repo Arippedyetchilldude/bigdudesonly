@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog - bigdudesonly.com</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 40px 20px;
+            background-color: black;
+            background-image: url('bg.jpg');
+            background-size: 100% 100%;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: red;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+
+        .title {
+            font-size: clamp(2rem, 8vw, 5rem);
+            margin-bottom: 2rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            background-color: yellow;
+            padding: clamp(15px, 4vw, 40px) clamp(30px, 8vw, 80px);
+            border-radius: 50%;
+            display: inline-block;
+            transform: scaleX(1.5);
+            white-space: nowrap;
+            transition: all 0.5s ease-in-out;
+            max-width: calc(100vw - 80px);
+            box-sizing: border-box;
+            color: red;
+        }
+
+        .blog-container {
+            max-width: 800px;
+            width: 100%;
+            margin: 20px auto;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid red;
+        }
+
+        .blog-post {
+            background-color: yellow;
+            color: red;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            text-align: left;
+        }
+
+        .blog-post h2 {
+            margin-top: 0;
+            color: red;
+        }
+
+        .blog-post img {
+            max-width: 100%;
+            height: auto;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+
+        .blog-post .source-link {
+            color: red;
+            text-decoration: none;
+            font-style: italic;
+        }
+
+        .blog-post .source-link:hover {
+            text-decoration: underline;
+        }
+
+        .create-post-form {
+            background-color: yellow;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .create-post-form input,
+        .create-post-form textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid red;
+            border-radius: 5px;
+            background-color: white;
+            color: black;
+        }
+
+        .create-post-form textarea {
+            min-height: 200px;
+        }
+
+        .create-post-form button {
+            background-color: red;
+            color: yellow;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .create-post-form button:hover {
+            background-color: #cc0000;
+        }
+
+        .home-link {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: yellow;
+            color: red;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .home-link:hover {
+            background-color: #ffeb3b;
+        }
+
+        .blog-post .author {
+            font-style: italic;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        body.colorblind-mode .blog-post .author {
+            color: #999;
+        }
+
+        .create-post-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: yellow;
+            color: red;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .create-post-btn:hover {
+            background-color: #ffeb3b;
+        }
+
+        body.colorblind-mode .create-post-btn {
+            background-color: #2B83EA;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="home-link">← Home</a>
+    <div class="title">Blog</div>
+
+    <div class="blog-container">
+        <!-- Create Post Form (only visible to whitelisted users) -->
+        <div id="create-post-form" class="create-post-form" style="display: none;">
+            <h2>Create New Post</h2>
+            <form id="blog-form">
+                <input type="text" id="post-title" placeholder="Post Title" required>
+                <input type="url" id="post-image" placeholder="Image URL" required>
+                <input type="url" id="post-source" placeholder="Source URL (optional)">
+                <textarea id="post-content" placeholder="Write your blog post here..." required></textarea>
+                <button type="submit">Publish Post</button>
+            </form>
+        </div>
+
+        <!-- Blog Posts Container -->
+        <div id="blog-posts">
+            <!-- Blog posts will be dynamically added here -->
+        </div>
+    </div>
+
+    <a href="create-blog.html" id="create-post-btn" style="display: none;">Create Post</a>
+
+    <script>
+        // Check if user is whitelisted (you'll need to implement this)
+        function isUserWhitelisted() {
+            // This is a placeholder - implement your own whitelist check
+            return false;
+        }
+
+        // Get current user info (you'll need to implement this)
+        function getCurrentUser() {
+            // This is a placeholder - implement your own user info retrieval
+            return {
+                name: "Big Dude",
+                id: "user123"
+            };
+        }
+
+        // Show create post form if user is whitelisted
+        if (isUserWhitelisted()) {
+            document.getElementById('create-post-form').style.display = 'block';
+        }
+
+        // Show create post button if user is whitelisted
+        if (isUserWhitelisted()) {
+            document.getElementById('create-post-btn').style.display = 'block';
+        }
+
+        // Handle form submission
+        document.getElementById('blog-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const currentUser = getCurrentUser();
+            const post = {
+                title: document.getElementById('post-title').value,
+                imageUrl: document.getElementById('post-image').value,
+                sourceUrl: document.getElementById('post-source').value,
+                content: document.getElementById('post-content').value,
+                date: new Date().toISOString(),
+                author: currentUser.name,
+                authorId: currentUser.id
+            };
+
+            // Here you would typically send this to your backend
+            console.log('New post:', post);
+            
+            // Clear form
+            e.target.reset();
+        });
+
+        // Function to create a blog post element
+        function createBlogPostElement(post) {
+            const postElement = document.createElement('div');
+            postElement.className = 'blog-post';
+            postElement.innerHTML = `
+                <h2>${post.title}</h2>
+                <div class="author">Written by ${post.author}</div>
+                <img src="${post.imageUrl}" alt="${post.title}">
+                ${post.sourceUrl ? `<a href="${post.sourceUrl}" class="source-link" target="_blank">Source</a>` : ''}
+                <p>${post.content}</p>
+                <small>Posted on ${new Date(post.date).toLocaleDateString()}</small>
+            `;
+            return postElement;
+        }
+
+        // Load blog posts (you'll need to implement this)
+        async function loadBlogPosts() {
+            // This is a placeholder - implement your own post loading logic
+            const posts = [
+                {
+                    title: "Sample Post",
+                    imageUrl: "https://via.placeholder.com/800x400",
+                    sourceUrl: "https://example.com",
+                    content: "This is a sample blog post. Replace this with your actual content.",
+                    date: new Date().toISOString(),
+                    author: "Big Dude",
+                    authorId: "user123"
+                }
+            ];
+
+            const postsContainer = document.getElementById('blog-posts');
+            posts.forEach(post => {
+                postsContainer.appendChild(createBlogPostElement(post));
+            });
+        }
+
+        // Load posts when page loads
+        loadBlogPosts();
+    </script>
+</body>
+</html> 

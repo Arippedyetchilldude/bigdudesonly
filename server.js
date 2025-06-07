@@ -3,6 +3,8 @@ const cors = require('cors');
 const { Pool } = require('pg');
 const app = express();
 const port = process.env.PORT || 3000;
+require('dotenv').config();
+const fetch = require('node-fetch');
 
 // Use your Render PostgreSQL connection string
 const pool = new Pool({
@@ -93,6 +95,41 @@ app.post('/api/verify', async (req, res) => {
       requestId: 'BDV-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
       processingTime: processingTime / 1000
     });
+  }
+});
+
+// Big Dude verification endpoint (OpenAI proxy)
+app.post('/api/verify-big-dude', async (req, res) => {
+  const { imageData } = req.body;
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: 'OpenAI API key not configured.' });
+  }
+  try {
+    const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini-2024-07-18",
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "Look at this image and tell me if you can see the number 420 clearly visible. Respond with only 'true' if you see 420, or 'false' if you don't." },
+              { type: "image_url", image_url: { url: imageData } }
+            ]
+          }
+        ],
+        max_tokens: 10
+      })
+    });
+    const result = await openaiRes.json();
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
