@@ -15,25 +15,34 @@ const pool = new Pool({
 app.use(cors());
 app.use(express.json());
 
-// In-memory stats for development (replace with database in production)
-let stats = { visits: 0, successes: 0, fails: 0 };
+// Ensure a row exists
+async function ensureRow() {
+  await pool.query(
+    'INSERT INTO visitor_stats (id, visits, successes, fails) VALUES (1, 0, 0, 0) ON CONFLICT (id) DO NOTHING'
+  );
+}
 
 // Increment and get visitor count
 app.get('/api/visitors', async (req, res) => {
   try {
-    stats.visits++;
-    res.json({ visits: stats.visits });
+    await ensureRow();
+    const result = await pool.query(
+      'UPDATE visitor_stats SET visits = visits + 1 WHERE id = 1 RETURNING visits'
+    );
+    res.json({ visits: result.rows[0].visits });
   } catch (err) {
-    res.status(500).json({ error: 'Server error', details: err.message });
+    res.status(500).json({ error: 'Database error', details: err.message });
   }
 });
 
 // Get all stats
 app.get('/api/stats', async (req, res) => {
   try {
-    res.json(stats);
+    await ensureRow();
+    const result = await pool.query('SELECT visits, successes, fails FROM visitor_stats WHERE id = 1');
+    res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: 'Server error', details: err.message });
+    res.status(500).json({ error: 'Database error', details: err.message });
   }
 });
 
@@ -57,10 +66,12 @@ app.post('/api/verify', async (req, res) => {
     await new Promise(resolve => setTimeout(resolve, stepTimes[i]));
   }
 
+  await ensureRow();
+
   // 1% chance of success
   const isSuccess = Math.random() < 0.01;
   if (isSuccess) {
-    stats.successes++;
+    await pool.query('UPDATE visitor_stats SET successes = successes + 1 WHERE id = 1');
     return res.json({
       success: true,
       message: 'nice dude',
@@ -70,7 +81,7 @@ app.post('/api/verify', async (req, res) => {
       processingTime: processingTime / 1000
     });
   } else {
-    stats.fails++;
+    await pool.query('UPDATE visitor_stats SET fails = fails + 1 WHERE id = 1');
     return res.json({
       success: false,
       message: 'You are too small, try again when you are big.',
