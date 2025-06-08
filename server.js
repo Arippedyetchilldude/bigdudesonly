@@ -15,34 +15,25 @@ const pool = new Pool({
 app.use(cors());
 app.use(express.json());
 
-// Ensure a row exists
-async function ensureRow() {
-  await pool.query(
-    'INSERT INTO visitor_stats (id, visits, successes, fails) VALUES (1, 0, 0, 0) ON CONFLICT (id) DO NOTHING'
-  );
-}
+// In-memory stats for development (replace with database in production)
+let stats = { visits: 0, successes: 0, fails: 0 };
 
 // Increment and get visitor count
 app.get('/api/visitors', async (req, res) => {
   try {
-    await ensureRow();
-    const result = await pool.query(
-      'UPDATE visitor_stats SET visits = visits + 1 WHERE id = 1 RETURNING visits'
-    );
-    res.json({ visits: result.rows[0].visits });
+    stats.visits++;
+    res.json({ visits: stats.visits });
   } catch (err) {
-    res.status(500).json({ error: 'Database error', details: err.message });
+    res.status(500).json({ error: 'Server error', details: err.message });
   }
 });
 
 // Get all stats
 app.get('/api/stats', async (req, res) => {
   try {
-    await ensureRow();
-    const result = await pool.query('SELECT visits, successes, fails FROM visitor_stats WHERE id = 1');
-    res.json(result.rows[0]);
+    res.json(stats);
   } catch (err) {
-    res.status(500).json({ error: 'Database error', details: err.message });
+    res.status(500).json({ error: 'Server error', details: err.message });
   }
 });
 
@@ -66,12 +57,10 @@ app.post('/api/verify', async (req, res) => {
     await new Promise(resolve => setTimeout(resolve, stepTimes[i]));
   }
 
-  await ensureRow();
-
   // 1% chance of success
   const isSuccess = Math.random() < 0.01;
   if (isSuccess) {
-    await pool.query('UPDATE visitor_stats SET successes = successes + 1 WHERE id = 1');
+    stats.successes++;
     return res.json({
       success: true,
       message: 'nice dude',
@@ -81,7 +70,7 @@ app.post('/api/verify', async (req, res) => {
       processingTime: processingTime / 1000
     });
   } else {
-    await pool.query('UPDATE visitor_stats SET fails = fails + 1 WHERE id = 1');
+    stats.fails++;
     return res.json({
       success: false,
       message: 'You are too small, try again when you are big.',
@@ -102,10 +91,21 @@ app.post('/api/verify', async (req, res) => {
 app.post('/api/verify-big-dude', async (req, res) => {
   const { imageData } = req.body;
   const apiKey = process.env.OPENAI_API_KEY;
+  
+  // For testing without API key, always return false
   if (!apiKey) {
-    return res.status(500).json({ error: 'OpenAI API key not configured.' });
+    console.log('OpenAI API key not configured - returning test response');
+    return res.json({
+      choices: [{
+        message: {
+          content: 'false'
+        }
+      }]
+    });
   }
+  
   try {
+    console.log('Sending image to OpenAI for 420 verification...');
     const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -126,9 +126,16 @@ app.post('/api/verify-big-dude', async (req, res) => {
         max_tokens: 10
       })
     });
+    
+    if (!openaiRes.ok) {
+      throw new Error(`OpenAI API responded with status: ${openaiRes.status}`);
+    }
+    
     const result = await openaiRes.json();
+    console.log('OpenAI response:', result);
     res.json(result);
   } catch (err) {
+    console.error('OpenAI API Error:', err);
     res.status(500).json({ error: err.message });
   }
 });

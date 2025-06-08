@@ -394,11 +394,19 @@
     <script>
         // BigDudeVerifier API Client
         const BigDudeVerifier = {
-            API_URL: 'https://bigdudesonly-api.onrender.com/api/verify',
+            // Use localhost for development, or your deployed server URL
+            API_BASE_URL: (window.location.hostname === 'localhost' || window.location.protocol === 'file:') ? 'http://localhost:3000' : 'https://bigdudesonly-api.onrender.com',
+            
+            init() {
+                console.log('API Base URL:', this.API_BASE_URL);
+                console.log('Window location:', window.location.href);
+                console.log('Protocol:', window.location.protocol);
+                console.log('Hostname:', window.location.hostname);
+            },
             
             async verifyDude(imageData) {
                 try {
-                    const response = await fetch(this.API_URL, {
+                    const response = await fetch(`${this.API_BASE_URL}/api/verify`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -417,24 +425,44 @@
 
             async verifyBigDude(imageData) {
                 try {
-                    const response = await fetch('/api/verify-big-dude', {
+                    console.log('Verifying big dude with image data...');
+                    const response = await fetch(`${this.API_BASE_URL}/api/verify-big-dude`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ imageData })
                     });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
                     const result = await response.json();
-                    const isBigDude = result.choices && result.choices[0].message.content.trim().toLowerCase() === 'true';
+                    console.log('OpenAI API Response:', result);
+                    
+                    // Check if OpenAI detected the number 420
+                    const isBigDude = result.choices && 
+                                     result.choices[0] && 
+                                     result.choices[0].message && 
+                                     result.choices[0].message.content.trim().toLowerCase() === 'true';
+                    
                     if (isBigDude) {
                         localStorage.setItem('isBigDude', 'true');
                         localStorage.setItem('bigDudeName', 'Big Dude ' + Math.floor(Math.random() * 1000));
+                        console.log('Big dude verified! Number 420 detected.');
+                    } else {
+                        console.log('Not a big dude - number 420 not detected.');
                     }
+                    
                     return isBigDude;
                 } catch (error) {
-                    console.error('API Error:', error);
+                    console.error('Big Dude API Error:', error);
                     throw error;
                 }
             }
         };
+
+        // Initialize API client
+        BigDudeVerifier.init();
 
         const enterBtn = document.getElementById('enter-btn');
         const cameraContainer = document.getElementById('camera-container');
@@ -484,26 +512,48 @@
                 ctx.drawImage(video, 0, 0);
                 const imageData = canvas.toDataURL('image/jpeg');
 
-                // First verify if they're a big dude
+                console.log('Image captured, checking for number 420...');
+
+                // Animate processing steps
+                for (let i = 0; i < steps.length; i++) {
+                    steps[i].style.opacity = '1';
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                }
+
+                // Verify if they're a big dude (check for number 420)
                 const isBigDude = await BigDudeVerifier.verifyBigDude(imageData);
                 
+                loading.style.display = 'none';
+                
                 if (isBigDude) {
-                    // If they're a big dude, redirect to the big dudes section
-                    window.location.href = 'bigdudesonly.html';
+                    // If they're a big dude, show success and redirect
+                    document.getElementById('success-message').textContent = 'Welcome, Big Dude! You found the secret number 420!';
+                    document.getElementById('success-modal').style.display = 'block';
+                    
+                    // Redirect after showing success message
+                    setTimeout(() => {
+                        window.location.href = 'bigdudesonly.html';
+                    }, 3000);
                     return;
                 }
 
-                // If not a big dude, proceed with regular verification
-                console.log('Initiating BigDudeVerifier API request...');
-                const result = await BigDudeVerifier.verifyDude();
+                // If not a big dude, try the fallback verification (1% chance)
+                console.log('Number 420 not detected, trying fallback verification...');
+                
+                // Show loading again for fallback
+                loading.style.display = 'block';
+                Array.from(steps).forEach(step => step.style.opacity = '0.3');
+                
+                const result = await BigDudeVerifier.verifyDude(imageData);
 
-                // Animate steps as reported by API
+                // Animate steps again
                 for (let i = 0; i < steps.length; i++) {
                     steps[i].style.opacity = '1';
                     await new Promise(resolve => setTimeout(resolve, 1200));
                 }
 
                 loading.style.display = 'none';
+                
                 if (result.success) {
                     // Show success modal
                     document.getElementById('success-message').textContent = result.message;
@@ -536,7 +586,20 @@
                 }, 11000);
             } catch (error) {
                 console.error('API Error:', error);
+                loading.style.display = 'none';
                 alert('Error processing image. Please try again.');
+                
+                // Reset UI on error
+                cameraContainer.style.display = 'none';
+                captureBtn.style.display = 'none';
+                enterBtn.style.display = 'block';
+                
+                // Stop the camera stream
+                const stream = video.srcObject;
+                if (stream) {
+                    const tracks = stream.getTracks();
+                    tracks.forEach(track => track.stop());
+                }
             }
         });
 
