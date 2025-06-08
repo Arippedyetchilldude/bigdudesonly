@@ -153,4 +153,5 @@ app.post('/api/verify-big-dude', async (req, res) => {
 
 app.listen(port, () => {
   console.log(`API server running at http://localhost:${port}`);
+  console.log('Image verification endpoint available at /api/verify-big-dude');
 }); 
